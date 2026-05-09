@@ -305,7 +305,7 @@
                 "security": [{ "oauth2": [] }],
                 "parameters": [
                     { "name": "date",    "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" },
-                    { "name": "daytime", "in": "query", "required": true, "type": "string", "enum": ["breakfast", "lunch", "dinner", "snack"] }
+                    { "name": "daytime", "in": "query", "required": true, "type": "string", "enum": ["breakfast", "lunch", "dinner", "snack"], "description": "Meal slot to get suggestions for" }
                 ],
                 "responses": {
                     "200": {
@@ -463,22 +463,22 @@
         "UserDietaryPreferences": {
             "type": "object",
             "properties": {
-                "restriction": { "type": "string", "nullable": true, "example": "vegetarian", "description": "Dietary restriction label, or null if none" }
+                "restriction": { "type": "string", "x-nullable": true, "example": "vegetarian", "description": "Dietary restriction label, or null if none" }
             }
         },
         "Exercise": {
             "type": "object",
             "properties": {
-                "id":          { "type": "string", "format": "uuid" },
-                "note":        { "type": "string", "nullable": true },
+                "id":          { "type": "string" },
+                "note":        { "type": "string", "x-nullable": true },
                 "date":        { "type": "string", "example": "2024-01-15 08:00:00" },
                 "name":        { "type": "string" },
-                "external_id": { "type": "string", "nullable": true },
+                "external_id": { "type": "string", "x-nullable": true },
                 "energy":      { "type": "number", "description": "Calories burned" },
                 "distance":    { "type": "number" },
                 "duration":    { "type": "number", "description": "Duration in seconds" },
-                "source":      { "type": "string", "nullable": true },
-                "gateway":     { "type": "string", "nullable": true },
+                "source":      { "type": "string", "x-nullable": true },
+                "gateway":     { "type": "string", "x-nullable": true },
                 "steps":       { "type": "number" }
             }
         },
@@ -519,23 +519,23 @@
         },
         "UserWeight": {
             "type": "object",
-            "nullable": true,
+            "description": "Weight entry, or null if no entry exists for the given date.",
             "properties": {
-                "id":          { "type": "string", "format": "uuid" },
+                "id":          { "type": "string" },
                 "date":        { "type": "string", "example": "2024-01-15 08:00:00" },
-                "value":       { "type": "number", "nullable": true, "description": "Weight in kg" },
-                "external_id": { "type": "string", "nullable": true },
-                "gateway":     { "type": "string", "nullable": true },
-                "source":      { "type": "string", "nullable": true }
+                "value":       { "type": "number", "x-nullable": true, "description": "Weight in kg" },
+                "external_id": { "type": "string", "x-nullable": true },
+                "gateway":     { "type": "string", "x-nullable": true },
+                "source":      { "type": "string", "x-nullable": true }
             }
         },
         "UserSuggestedProduct": {
             "type": "object",
             "properties": {
-                "product_id":       { "type": "string", "format": "uuid" },
+                "product_id":       { "type": "string" },
                 "amount":           { "type": "number", "description": "Amount in grams" },
-                "serving":          { "type": "string", "nullable": true },
-                "serving_quantity": { "type": "number", "nullable": true }
+                "serving":          { "type": "string", "x-nullable": true },
+                "serving_quantity": { "type": "number", "x-nullable": true }
             }
         }
     }
