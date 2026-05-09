@@ -16,7 +16,11 @@
         { "name": "products", "description": "Food product search and detail" },
         { "name": "diary",    "description": "User food diary (consumed items)" },
         { "name": "summary",  "description": "Daily nutrition summary widgets" },
-        { "name": "water",    "description": "Water intake tracking" }
+        { "name": "water",    "description": "Water intake tracking" },
+        { "name": "exercises",  "description": "User exercise and training log" },
+        { "name": "goals",      "description": "User nutrition and activity goals" },
+        { "name": "settings",   "description": "User app settings and preferences" },
+        { "name": "bodyvalues", "description": "Body measurements (weight, etc.)" }
     ],
     "schemes": ["https"],
     "securityDefinitions": {
@@ -213,6 +217,106 @@
                     "200": { "description": "Water intake logged successfully" }
                 }
             }
+        },
+        "/user/dietary-preferences": {
+            "get": {
+                "tags": ["user"],
+                "summary": "Get dietary preferences",
+                "description": "Returns the user's dietary restriction (e.g. vegetarian, vegan).",
+                "security": [{ "oauth2": [] }],
+                "responses": {
+                    "200": {
+                        "description": "Dietary preferences",
+                        "schema": { "$ref": "#/definitions/UserDietaryPreferences" }
+                    }
+                }
+            }
+        },
+        "/user/exercises": {
+            "get": {
+                "tags": ["exercises"],
+                "summary": "Get exercises for a date",
+                "description": "Returns training and custom_training entries logged by the user for a specific day.",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date", "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exercise entries",
+                        "schema": { "$ref": "#/definitions/UserExercisesResponse" }
+                    }
+                }
+            }
+        },
+        "/user/goals/unmodified": {
+            "get": {
+                "tags": ["goals"],
+                "summary": "Get user goals for a date",
+                "description": "Returns calorie, macro, water, step, and weight goals for the specified day.",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date", "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User goals",
+                        "schema": { "$ref": "#/definitions/UserGoals" }
+                    }
+                }
+            }
+        },
+        "/user/settings": {
+            "get": {
+                "tags": ["settings"],
+                "summary": "Get user settings",
+                "description": "Returns boolean feature flags for trackers, reminders, and other app settings.",
+                "security": [{ "oauth2": [] }],
+                "responses": {
+                    "200": {
+                        "description": "User settings",
+                        "schema": { "$ref": "#/definitions/UserSettings" }
+                    }
+                }
+            }
+        },
+        "/user/bodyvalues/weight/last": {
+            "get": {
+                "tags": ["bodyvalues"],
+                "summary": "Get last weight entry",
+                "description": "Returns the most recent weight entry for the user on or before the given date, or null if none exists.",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date", "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Weight entry or null",
+                        "schema": { "$ref": "#/definitions/UserWeight" }
+                    }
+                }
+            }
+        },
+        "/user/products/suggested": {
+            "get": {
+                "tags": ["products"],
+                "summary": "Get suggested products for a meal slot",
+                "description": "Returns products suggested for the user based on their history for a specific date and meal (daytime).",
+                "security": [{ "oauth2": [] }],
+                "parameters": [
+                    { "name": "date",    "in": "query", "required": true, "type": "string", "format": "date", "description": "e.g. 2024-01-15" },
+                    { "name": "daytime", "in": "query", "required": true, "type": "string", "enum": ["breakfast", "lunch", "dinner", "snack"] }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Suggested products",
+                        "schema": {
+                            "type": "array",
+                            "items": { "$ref": "#/definitions/UserSuggestedProduct" }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -354,6 +458,84 @@
             "properties": {
                 "date":         { "type": "string", "example": "2024-01-15 08:30:00" },
                 "water_intake": { "type": "number", "description": "Water intake in millilitres" }
+            }
+        },
+        "UserDietaryPreferences": {
+            "type": "object",
+            "properties": {
+                "restriction": { "type": "string", "nullable": true, "example": "vegetarian", "description": "Dietary restriction label, or null if none" }
+            }
+        },
+        "Exercise": {
+            "type": "object",
+            "properties": {
+                "id":          { "type": "string", "format": "uuid" },
+                "note":        { "type": "string", "nullable": true },
+                "date":        { "type": "string", "example": "2024-01-15 08:00:00" },
+                "name":        { "type": "string" },
+                "external_id": { "type": "string", "nullable": true },
+                "energy":      { "type": "number", "description": "Calories burned" },
+                "distance":    { "type": "number" },
+                "duration":    { "type": "number", "description": "Duration in seconds" },
+                "source":      { "type": "string", "nullable": true },
+                "gateway":     { "type": "string", "nullable": true },
+                "steps":       { "type": "number" }
+            }
+        },
+        "UserExercisesResponse": {
+            "type": "object",
+            "properties": {
+                "training":        { "type": "array", "items": { "$ref": "#/definitions/Exercise" } },
+                "custom_training": { "type": "array", "items": { "$ref": "#/definitions/Exercise" } }
+            }
+        },
+        "UserGoals": {
+            "type": "object",
+            "description": "Daily goals for the user",
+            "properties": {
+                "energy.energy":      { "type": "number", "description": "Calorie goal in kcal" },
+                "nutrient.protein":   { "type": "number", "description": "Protein goal in grams" },
+                "nutrient.fat":       { "type": "number", "description": "Fat goal in grams" },
+                "nutrient.carb":      { "type": "number", "description": "Carbohydrate goal in grams" },
+                "activity.step":      { "type": "number", "description": "Step count goal" },
+                "bodyvalue.weight":   { "type": "number", "description": "Target weight in kg" },
+                "water":              { "type": "number", "description": "Water intake goal in ml" }
+            }
+        },
+        "UserSettings": {
+            "type": "object",
+            "properties": {
+                "has_water_tracker":               { "type": "boolean" },
+                "has_diary_tipps":                 { "type": "boolean" },
+                "has_meal_reminders":              { "type": "boolean" },
+                "has_usage_reminders":             { "type": "boolean" },
+                "has_weight_reminders":            { "type": "boolean" },
+                "has_water_reminders":             { "type": "boolean" },
+                "consume_activity_calories":       { "type": "boolean" },
+                "has_feelings":                    { "type": "boolean" },
+                "has_fasting_tracker_reminders":   { "type": "boolean" },
+                "has_fasting_stage_reminders":     { "type": "boolean" }
+            }
+        },
+        "UserWeight": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+                "id":          { "type": "string", "format": "uuid" },
+                "date":        { "type": "string", "example": "2024-01-15 08:00:00" },
+                "value":       { "type": "number", "nullable": true, "description": "Weight in kg" },
+                "external_id": { "type": "string", "nullable": true },
+                "gateway":     { "type": "string", "nullable": true },
+                "source":      { "type": "string", "nullable": true }
+            }
+        },
+        "UserSuggestedProduct": {
+            "type": "object",
+            "properties": {
+                "product_id":       { "type": "string", "format": "uuid" },
+                "amount":           { "type": "number", "description": "Amount in grams" },
+                "serving":          { "type": "string", "nullable": true },
+                "serving_quantity": { "type": "number", "nullable": true }
             }
         }
     }
